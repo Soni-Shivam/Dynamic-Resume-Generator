@@ -1,228 +1,153 @@
-/* LaTeX-faithful preview styles — do NOT use Tailwind here */
+/* 
+  LaTeX Faithful Preview (v5) - Exactly matching latex_resume_demo.html
+*/
 
-/* Reset Tailwind preflight inside the preview */
+/* Box sizing only, no 'all: revert' as it destroys custom margins and latex.css */
 .resume-preview,
 .resume-preview * {
-  all: revert;
   box-sizing: border-box;
 }
 
+/* Base Font & Color */
 .resume-preview {
-  font-family: 'CMU Serif', 'Computer Modern Serif', Georgia, serif;
+  font-family: 'Latin Modern', 'Libertinus', Georgia, Cambria, 'Times New Roman', Times, serif;
   font-size: 11pt;
   line-height: 1.2;
   color: #000;
   background: #fff;
   width: 210mm;
   min-height: 297mm;
-  padding-top: 14.11mm;
-  padding-bottom: 6.4mm;
-  padding-left: 14.11mm;
-  padding-right: 14.11mm;
+  padding: 14.11mm 14.11mm 6.4mm 14.11mm;
   box-sizing: border-box;
-  position: relative;
-  display: block;
+  margin: 0 auto;
+  text-align: left;
 }
 
-/* ---- Header ---- */
+/* --- Header Simulation --- */
 .preview-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
 }
 
 .preview-logo {
   height: 2.0cm;
   width: auto;
-  flex-shrink: 0;
 }
 
 .preview-header-table {
-  flex: 1;
   border-collapse: collapse;
   font-size: 11pt;
+  width: 100%;
 }
 
 .preview-header-table td {
-  padding: 1px 4px 1px 0;
-  white-space: nowrap;
+  padding: 0 4px;
   font-weight: bold;
 }
 
-/* ---- Academic table ---- */
+/* --- Academic Table --- */
 .academic-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 10.5pt;
-  margin-top: 4px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .academic-table th {
+  border-top: 1.5px solid #000; 
+  border-bottom: 1px solid #000; 
+  padding: 4px;
   font-weight: bold;
   text-align: left;
-  padding: 2px 6px;
-  border-top: 1.5px solid #000;
-  border-bottom: 1px solid #000;
 }
 
 .academic-table td {
-  padding: 2px 6px;
-  vertical-align: top;
+  padding: 4px;
 }
 
-.academic-table tbody tr:last-child td {
-  border-bottom: 1.5px solid #000;
+.academic-table tr:last-child td {
+  border-bottom: 1.5px solid #000; 
 }
 
-/* ---- Minor note ---- */
-.minor-note {
-  font-size: 10pt;
-  margin-top: 6px;
-  margin-bottom: -4px;
-  letter-spacing: -0.01em;
+/* --- Section Formatting --- */
+section h2 {
+  border-bottom: 1px solid var(--text-color);
+  padding-bottom: 0.2rem;
+  margin-top: 12px;
+  margin-bottom: 8px;
 }
 
-/* ---- Section heading ---- */
-.section-heading {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-variant: small-caps;
-  font-size: 1.1em;
-  font-weight: bold;
-  color: #0000cc;
-  margin-bottom: 1px;
-  margin-top: 7px;
+/* --- Project Layout --- */
+.project-entry {
+  margin-bottom: 1.2rem;
 }
 
-.section-heading::after {
-  content: '';
-  flex: 1;
-  height: 0.5pt;
-  background: #000;
-  display: block;
-}
-
-/* ---- Project entry ---- */
-.project-header {
+.header-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 1px;
+  margin-bottom: -2px; /* vspace adjustment */
 }
 
-.project-title-left {
+.title-left {
+  font-size: 1.05em;
   font-weight: bold;
-  font-size: 10.5pt;
 }
 
-.project-title-left em {
-  font-weight: normal;
-}
-
-.project-date {
+.date-right {
   font-style: italic;
-  font-size: 9pt;
-  white-space: nowrap;
-  margin-left: 8px;
+  font-size: 0.9em;
 }
 
-.project-rule {
+.separator-rule {
   border: none;
-  border-top: 0.5pt solid #000;
-  margin: 2px 0 1px 0;
-}
-
-.project-context {
-  font-style: italic;
-  font-size: 9.5pt;
-  margin-bottom: 1px;
-  letter-spacing: -0.025em;
-}
-
-.project-bullets {
-  margin: 0;
-  padding-left: 1.5em;
-  list-style: none;
-}
-
-.project-bullets li {
-  line-height: 1.15;
-  position: relative;
-  margin-bottom: 0;
-  padding-bottom: 0;
-  font-size: 10.5pt;
-}
-
-.project-bullets li + li {
-  margin-top: -0.5mm;
-}
-
-.project-bullets li::before {
-  content: '•';
-  position: absolute;
-  left: -1.1em;
-  font-size: 0.5em;
-  top: 0.42em;
-  line-height: 1;
-}
-
-.bullet-overflow {
-  text-decoration: underline wavy #ef4444;
-  text-decoration-thickness: 1px;
-}
-
-/* ---- Simple list (scholastic, extracurricular) ---- */
-.simple-bullets {
-  margin: 0;
-  padding-left: 1.5em;
-  list-style: none;
-}
-
-.simple-bullets li {
-  line-height: 1.18;
-  position: relative;
-  font-size: 10.5pt;
-}
-
-.simple-bullets li + li {
-  margin-top: -0.3mm;
-}
-
-.simple-bullets li::before {
-  content: '•';
-  position: absolute;
-  left: -1.1em;
-  font-size: 0.5em;
-  top: 0.42em;
-  line-height: 1;
-}
-
-/* ---- Skills / Courses table ---- */
-.skills-table {
+  border-top: 0.5pt solid black;
+  margin: 2px 0 4px 0;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 9.5pt;
-  margin-top: 3px;
 }
 
-.skills-table td {
-  border: 0.5pt solid #000;
-  padding: 2px 5px;
-  vertical-align: top;
-  line-height: 1.2;
+.impact-statement {
+  font-style: italic;
+  display: block;
+  margin-bottom: 2px;
+  /* Simulating \textls[-20] to [-50] */
+  letter-spacing: -0.02em; 
 }
 
-.skills-table td:first-child {
-  width: 20%;
-  font-weight: bold;
+/* Tight list replication */
+.tight-list {
+  margin: -4pt 0 0 0; /* vspace -10pt simulation */
+  padding-left: 1.2rem;
+  list-style-type: disc;
 }
 
-.skills-table td:last-child {
-  width: 75%;
+.tight-list li {
+  margin: 0 0 2px 0; /* Compact but not overlapping */
+  padding: 0;
+  line-height: 1.2; 
+  letter-spacing: -0.01em;
 }
 
-.project-entry {
-  margin-bottom: -2px;
+.tight-list li:last-child {
+  margin-bottom: 0;
+}
+
+.tight-list li::marker {
+  font-size: 0.7em;
+}
+
+/* Minor Note styling */
+.minor-note {
+  font-size: 10pt;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* Global scale override fix */
+.preview-scaling-container {
+  display: flex;
+  justify-content: center;
 }

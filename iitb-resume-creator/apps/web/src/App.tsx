@@ -185,21 +185,21 @@ export default function App() {
         </div>
 
         {/* Preview scroll area */}
-        <div ref={previewPanelRef} className="flex-1 overflow-y-auto bg-gray-200 p-6">
+        <div ref={previewPanelRef} className="flex-1 overflow-y-auto bg-gray-200 p-6 flex justify-center">
           <div
+            className="preview-scaling-container"
             style={{
               width: 794,
               height: a4HeightPx * scale,
+              minHeight: a4HeightPx * scale,
               transform: `scale(${scale})`,
               transformOrigin: 'top center',
-              margin: '0 auto',
-              marginBottom: a4HeightPx * (scale - 1),
             }}
           >
             <div
               ref={previewContentRef}
               style={{
-                boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
               }}
             >
               <ResumePreview resume={resume} />

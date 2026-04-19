@@ -10,7 +10,7 @@ interface Props {
 
 export const ResumePreview: React.FC<Props> = memo(({ resume }) => {
   return (
-    <div className="resume-preview" id="resume-preview-root">
+    <div className="resume-preview libertine" id="resume-preview-root">
       <PreviewHeader personal={resume.personal} academics={resume.academics} />
       {resume.sections.map(section => (
         <PreviewSection key={section.id} section={section} />

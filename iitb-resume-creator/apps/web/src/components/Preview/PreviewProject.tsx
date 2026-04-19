@@ -19,21 +19,22 @@ export const PreviewProjectEntry: React.FC<ProjectProps> = ({ item }) => {
 
   return (
     <div className="project-entry">
-      <div className="project-header">
+      <div className="header-row">
         <span
-          className="project-title-left"
+          className="title-left"
           dangerouslySetInnerHTML={{ __html: parts.join(' <span style="font-style:normal;font-weight:bold">|</span> ') }}
         />
-        <span className="project-date">{item.date}</span>
+        <span className="date-right">{item.date}</span>
       </div>
-      <hr className="project-rule" />
+      <hr className="separator-rule" />
       {item.contextLine && (
-        <div
-          className="project-context"
+        <span
+          className="impact-statement"
+          style={textlsStyle(item.textls)}
           dangerouslySetInnerHTML={{ __html: parseBoldMarkdown(item.contextLine) }}
         />
       )}
-      <ul className="project-bullets">
+      <ul className="tight-list">
         {item.bullets.map(bullet => (
           <li
             key={bullet.id}
@@ -48,7 +49,7 @@ export const PreviewProjectEntry: React.FC<ProjectProps> = ({ item }) => {
 };
 
 export const PreviewSimpleList: React.FC<{ item: SimpleListEntry }> = ({ item }) => (
-  <ul className="simple-bullets">
+  <ul className="tight-list">
     {item.bullets.map(bullet => (
       <li
         key={bullet.id}
@@ -61,7 +62,7 @@ export const PreviewSimpleList: React.FC<{ item: SimpleListEntry }> = ({ item })
 );
 
 export const PreviewBulletList: React.FC<{ item: BulletOnlyEntry }> = ({ item }) => (
-  <ul className="simple-bullets">
+  <ul className="tight-list">
     {item.bullets.map(bullet => (
       <li
         key={bullet.id}

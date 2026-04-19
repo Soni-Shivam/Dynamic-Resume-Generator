@@ -29,7 +29,7 @@ function toBold(text: string): string {
 
 function projectEntry(item: ProjectEntry): string {
   const parts = [item.title, item.subtitle, item.guide, item.organization]
-    .filter(Boolean)
+    .filter((p): p is string => Boolean(p))
     .map(p => escapeTex(p));
   // For the first part use textbf, rest use textit
   const titlePart = `\\textbf{${parts[0]}}`;

@@ -1,15 +1,26 @@
 /**
- * Parse **word** markdown bold syntax into HTML <strong> tags.
- * Used for both preview rendering and overflow measurement.
+ * Parse Markdown-like syntax into HTML for the preview.
+ * Supports:
+ * **bold** -> <strong>
+ * *italic* or _italic_ -> <em>
+ * `code` -> <code>
  */
 export function parseBoldMarkdown(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
 }
 
 /**
- * Convert **word** markdown to LaTeX \textbf{word}
+ * Convert markdown to LaTeX commands.
  */
 export function markdownToLatex(text: string): string {
-  // text has already been escaped by escapeTex
-  return text.replace(/\*\*(.+?)\*\*/g, '\\textbf{$1}');
+  // Assume text is already escaped
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '\\textbf{$1}')
+    .replace(/\*(.+?)\*/g, '\\textit{$1}')
+    .replace(/_(.+?)_/g, '\\textit{$1}')
+    .replace(/`(.+?)`/g, '\\texttt{$1}');
 }

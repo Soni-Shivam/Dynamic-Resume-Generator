@@ -41,6 +41,7 @@ export interface ProjectEntry {
   organization?: string;
   date: string;
   contextLine?: string;
+  textls?: number;
   bullets: Bullet[];
 }
 

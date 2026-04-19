@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LaTeX.css Resume Replication</title>
+  <link rel="stylesheet" href="https://unpkg.com/latex.css/style.min.css">
+  <style>
+    /* Base setup to match LaTeX proportions */
+    body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+      font-size: 11pt;
+      line-height: 1.2;
+    }
+
+    /* Section replication */
+    .project-entry {
+      margin-bottom: 1.2rem;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: -2px; /* vspace adjustment */
+    }
+
+    .title-left {
+      font-size: 1.05em;
+    }
+
+    .date-right {
+      font-style: italic;
+      font-size: 0.9em;
+    }
+
+    .separator-rule {
+      border: none;
+      border-top: 0.5pt solid black;
+      margin: 2px 0 4px 0;
+      width: 100%;
+    }
+
+    .impact-statement {
+      font-style: italic;
+      display: block;
+      margin-bottom: 2px;
+      /* Simulating \textls[-20] to [-50] */
+      letter-spacing: -0.02em; 
+    }
+
+    /* Tight list replication */
+    .tight-list {
+      margin: -4pt 0 0 0; /* vspace -10pt simulation */
+      padding-left: 1.2rem;
+      list-style-type: disc;
+    }
+
+    .tight-list li {
+      margin: 0 0 2px 0; /* Compact but not overlapping */
+      padding: 0;
+      line-height: 1.2; 
+      letter-spacing: -0.01em;
+    }
+
+    .tight-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Utility for specific letter spacing requested in LaTeX */
+    .ls-tight { letter-spacing: -0.03em; }
+    .ls-very-tight { letter-spacing: -0.05em; }
+
+    strong { font-weight: bold; }
+    em { font-style: italic; }
+    code { font-family: monospace; }
+  </style>
+</head>
+<body class="libertine">
+
+  <!-- Project 1 -->
+  <div class="project-entry">
+    <div class="header-row">
+      <div class="title-left">
+        <strong>Intelligent Cart Super Add-On (CSAO) |</strong> <em>Zomathon Data Hackathon, Eternal</em>
+      </div>
+      <div class="date-right">(Apr'26)</div>
+    </div>
+    <div class="separator-rule"></div>
+    
+    <span class="impact-statement ls-very-tight">
+      Secured <strong>2<sup>nd</sup> Place Nationally</strong> among <strong>6,000+ participants</strong> for building an end-to-end recommendation system suggesting real-time cart add-ons to maximise <strong>AOV lift</strong> and <strong>Cart-to-Order ratio</strong> within <strong>200-300ms</strong> SLA
+    </span>
+
+    <ul class="tight-list">
+      <li class="ls-tight">Built <strong>4</strong>-level synthesis pipeline with <strong>10K+</strong> orders via <strong>3</strong> realism injections mirroring stochastic real-world scenarios</li>
+      <li class="ls-very-tight">Engineered a hybrid neural architecture fusing <strong>Set Transformer</strong> and <strong>GRU4Rec</strong> via cross-attention with <strong>LightGBM</strong></li>
+      <li>Designed <strong>3</strong>-tier cold-start strategy leveraging SLM embeddings, LLM knowledge graphs, and Bayesian priors</li>
+      <li class="ls-very-tight">Achieved &sim;<strong>65ms</strong> P99 latency (3&times; below SLA) via asynchronous ONNX execution and a <strong>Redis</strong>-backed pre-fetch layer</li>
+    </ul>
+  </div>
+
+  <!-- Project 2 -->
+  <div class="project-entry" style="margin-top: 14pt;">
+    <div class="header-row">
+      <div class="title-left">
+        <strong>Multi-Agent Investment Teaser Generator |</strong> <em>AI-ML Hackathon at IITB, Kelp Global</em>
+      </div>
+      <div class="date-right">(Mar'26)</div>
+    </div>
+    <div class="separator-rule"></div>
+
+    <span class="impact-statement">
+      Secured <strong>1<sup>st</sup> Prize</strong> among <strong>400+ IITB participants</strong> for building an autonomous multi-agent system that generates consulting-grade M&amp;A editable pitch decks and investment teasers
+    </span>
+
+    <ul class="tight-list">
+      <li>Engineered specialized agents to autonomously scrape public web data from Google and fuse private financials</li>
+      <li class="ls-very-tight">Engineered <strong>JSON</strong> <strong>schemas</strong> prompting Gemini to autonomously orchestrate sector-adaptive slide logic and content</li>
+      <li class="ls-very-tight">Created highly interactive <strong>Next.js</strong> UI featuring a <strong>Slate.js</strong> rich-text editor and dynamic charts for seamless visualization</li>
+      <li class="ls-tight">Integrated <strong>Zustand</strong> and <strong>PptxGenJS</strong> to generate fully editable, brand-compliant .pptx files featuring native charts</li>
+    </ul>
+  </div>
+
+</body>
+</html>

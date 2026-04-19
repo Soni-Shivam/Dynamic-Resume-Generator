@@ -22,11 +22,11 @@ interface Props {
 
 export const PreviewSection: React.FC<Props> = ({ section }) => {
   return (
-    <div>
-      <div className="section-heading">{section.displayTitle}</div>
+    <section>
+      <h2>{section.displayTitle}</h2>
       <div>
         {section.items.map(renderItem)}
       </div>
-    </div>
+    </section>
   );
 };
