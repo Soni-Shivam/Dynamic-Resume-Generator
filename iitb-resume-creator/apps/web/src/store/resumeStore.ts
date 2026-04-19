@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { arrayMove } from '@dnd-kit/sortable';
 import { nanoid } from 'nanoid';
-import type { Resume, Bullet, ProjectEntry, SectionItem } from '../types';
+import type { Resume, Bullet, ProjectEntry, SectionItem, TextLsStatus, Spacing } from '../types';
 import { defaultResume } from '../lib/defaultResume';
 import { generateLatex } from '../lib/latexGenerator';
+import { computeTextLs, computeHeaderRowTextLs } from '../lib/overflowDetector';
 
 interface ResumeStore {
   resume: Resume;
@@ -19,8 +20,8 @@ interface ResumeStore {
 
   // Bullet actions
   updateBulletText: (bulletId: string, text: string) => void;
-  updateBulletOverflow: (bulletId: string, status: 'ok' | 'warning' | 'overflow') => void;
-  updateBulletTextls: (bulletId: string, textls: number) => void;
+  updateBulletTextLs: (bulletId: string, value: number, status: TextLsStatus) => void;
+  recomputeAllTextLs: (columnWidthPx: number) => void;
   addBullet: (projectId: string) => void;
   deleteBullet: (bulletId: string, projectId: string) => void;
 
@@ -46,6 +47,7 @@ interface ResumeStore {
 
   // Computed
   generateLatex: () => string;
+  updateSpacing: (field: keyof Spacing, value: number) => void;
 }
 
 // Helper: find bullet in all projects in all sections
@@ -140,21 +142,66 @@ export const useResumeStore = create<ResumeStore>()(
         }
       }),
 
-    updateBulletTextls: (bulletId, textls) =>
+    updateBulletTextLs: (bulletId, value, status) =>
       set(state => {
         const loc = findBulletLocation(state.resume, bulletId);
         if (loc) {
           const item = state.resume.sections[loc.sectionIdx].items[loc.itemIdx] as { bullets: Bullet[] };
-          item.bullets[loc.bulletIdx].textls = textls;
+          item.bullets[loc.bulletIdx].textlsValue = value;
+          item.bullets[loc.bulletIdx].textlsStatus = status;
         }
       }),
 
-    updateBulletOverflow: (bulletId, status) =>
+    recomputeAllTextLs: (columnWidthPx) =>
       set(state => {
-        const loc = findBulletLocation(state.resume, bulletId);
-        if (loc) {
-          const item = state.resume.sections[loc.sectionIdx].items[loc.itemIdx] as { bullets: Bullet[] };
-          item.bullets[loc.bulletIdx].overflowStatus = status;
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        try {
+          for (const section of state.resume.sections) {
+            for (const item of section.items) {
+              if (item.kind === 'project') {
+                const typedProj = item as ProjectEntry;
+                let titleHTML = '';
+                if (typedProj.title.includes('|')) {
+                  const titleParts = typedProj.title.split('|');
+                  titleHTML = `<strong>${titleParts[0].trim()}</strong> | <em>${titleParts.slice(1).join('|').trim()}</em>`;
+                } else {
+                  titleHTML = `<strong>${typedProj.title}</strong>`;
+                }
+                const parts: string[] = [titleHTML];
+                if (typedProj.subtitle) parts.push(`<em>${typedProj.subtitle}</em>`);
+                if (typedProj.guide) parts.push(`<em>${typedProj.guide}</em>`);
+                if (typedProj.organization) parts.push(`<em>${typedProj.organization}</em>`);
+                
+                const fullTitleHtml = parts.join(' | ');
+                
+                const titleResult = computeHeaderRowTextLs(fullTitleHtml, typedProj.date, div, columnWidthPx);
+                typedProj.titleTextlsValue = titleResult.textlsValue;
+
+                if (typedProj.contextLine) {
+                  // contextLine uses standard bullet computation (full width available)
+                  // but we must format it as italic since it's rendered as italic
+                  div.style.fontStyle = 'italic';
+                  const contextResult = computeTextLs(typedProj.contextLine, div, columnWidthPx);
+                  typedProj.contextTextlsValue = contextResult.textlsValue;
+                  div.style.fontStyle = 'normal'; // restore for bullets
+                } else {
+                  typedProj.contextTextlsValue = 0;
+                }
+              }
+
+              if ('bullets' in item) {
+                const typed = item as { bullets: Bullet[] };
+                for (const bullet of typed.bullets) {
+                  const result = computeTextLs(bullet.text, div, columnWidthPx);
+                  bullet.textlsValue = result.textlsValue;
+                  bullet.textlsStatus = result.status;
+                }
+              }
+            }
+          }
+        } finally {
+          document.body.removeChild(div);
         }
       }),
 
@@ -163,7 +210,7 @@ export const useResumeStore = create<ResumeStore>()(
         for (const section of state.resume.sections) {
           const item = section.items.find(i => i.id === projectId);
           if (item && 'bullets' in item) {
-            (item as { bullets: Bullet[] }).bullets.push({ id: nanoid(), text: '', overflowStatus: 'ok' });
+            (item as { bullets: Bullet[] }).bullets.push({ id: nanoid(), text: '', textlsValue: 0, textlsStatus: 'ok' });
             return;
           }
         }
@@ -188,7 +235,7 @@ export const useResumeStore = create<ResumeStore>()(
           title: 'New Project',
           subtitle: 'Course / Competition',
           date: "Jan'26",
-          bullets: [{ id: nanoid(), text: 'Describe what you did...', overflowStatus: 'ok' }],
+          bullets: [{ id: nanoid(), text: 'Describe what you did...', textlsValue: 0, textlsStatus: 'ok' }],
         };
         section.items.push(newItem as SectionItem);
       }),
@@ -264,6 +311,11 @@ export const useResumeStore = create<ResumeStore>()(
       set(state => {
         state.focusedBulletId = bulletId;
         state.focusedProjectId = projectId;
+      }),
+
+    updateSpacing: (field, value) =>
+      set(state => {
+        (state.resume.spacing as any)[field] = value;
       }),
 
     generateLatex: () => generateLatex(get().resume),

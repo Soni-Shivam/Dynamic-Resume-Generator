@@ -2,21 +2,37 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SectionList } from './components/Editor/SectionList';
 import { ResumePreview } from './components/Preview/ResumePreview';
 import { AIPanel } from './components/AIAssistant/AIPanel';
+import { SpacingControls } from './components/Editor/SpacingControls';
 import { useResumeStore } from './store/resumeStore';
 
 type ZoomLevel = 'fit' | '75' | '100';
 
+function computeBulletColumnWidth(previewWidthPx: number): number {
+  // A4 width at screen resolution
+  const a4WidthMm = 210;
+  const leftMarginMm = 14.11;
+  const rightMarginMm = 14.11;
+  const bulletIndentMm = 5;    // leftmargin=* in the template ≈ 5mm
+
+  const mmToPx = previewWidthPx / a4WidthMm;
+  const usableWidthMm = a4WidthMm - leftMarginMm - rightMarginMm - bulletIndentMm;
+  return usableWidthMm * mmToPx;
+}
+
 export default function App() {
   const resume = useResumeStore(s => s.resume);
   const generateLatex = useResumeStore(s => s.generateLatex);
+  const recomputeAllTextLs = useResumeStore(s => s.recomputeAllTextLs);
 
   const previewPanelRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [zoom, setZoom] = useState<ZoomLevel>('fit');
   const [fitScale, setFitScale] = useState(0.75);
   const [previewColumnWidthPx, setPreviewColumnWidthPx] = useState(0);
   const [aiExpanded, setAiExpanded] = useState(false);
+  const [spacingExpanded, setSpacingExpanded] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [showLatex, setShowLatex] = useState(false);
@@ -31,18 +47,25 @@ export default function App() {
     const scale = Math.min(panelWidth / a4px, 1.0);
     setFitScale(scale);
 
-    // Column width for overflow measurement:
-    // A4 content width = 210mm - 2*14.11mm = 181.78mm ≈ 686px at 96dpi
-    // Bullet indent ≈ 1.5em ≈ 22px at 11pt
-    const contentWidthPx = (181.78 / 25.4) * 96 - 24; // subtract bullet indent
+    // Compute exact column width using 794 (since the layout inside is absolute 794px unscaled)
+    const contentWidthPx = computeBulletColumnWidth(a4px);
     setPreviewColumnWidthPx(contentWidthPx);
-  }, []);
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      recomputeAllTextLs(contentWidthPx);
+    }, 200);
+
+  }, [recomputeAllTextLs]);
 
   useEffect(() => {
     updateLayout();
     const observer = new ResizeObserver(updateLayout);
     if (previewPanelRef.current) observer.observe(previewPanelRef.current);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [updateLayout]);
 
   const getScale = () => {
@@ -139,6 +162,25 @@ export default function App() {
         {/* Scrollable section list */}
         <div className="flex-1 overflow-y-auto p-3">
           <SectionList previewColumnWidthPx={previewColumnWidthPx} />
+        </div>
+
+        {/* Spacing Panel */}
+        <div className="border-t border-gray-200 flex-shrink-0">
+          <button
+            onClick={() => setSpacingExpanded(e => !e)}
+            className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="text-blue-500">📏</span>
+              Document Spacing
+            </span>
+            <span className="text-gray-400">{spacingExpanded ? '▼' : '▲'}</span>
+          </button>
+          {spacingExpanded && (
+            <div className="border-t border-gray-100 max-h-80 overflow-y-auto">
+              <SpacingControls />
+            </div>
+          )}
         </div>
 
         {/* AI Panel */}

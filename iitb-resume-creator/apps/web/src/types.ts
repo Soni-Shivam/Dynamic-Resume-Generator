@@ -1,3 +1,10 @@
+export interface Spacing {
+  sectionTop: number;    // default 12 (px)
+  sectionBottom: number; // default 6 (px)
+  projectBottom: number; // default 12 (px)
+  bulletItemSep: number; // default 2 (px)
+}
+
 export interface Resume {
   personal: {
     name: string;
@@ -11,6 +18,7 @@ export interface Resume {
   };
   academics: AcademicRow[];
   sections: Section[];
+  spacing: Spacing;
 }
 
 export interface AcademicRow {
@@ -42,6 +50,8 @@ export interface ProjectEntry {
   date: string;
   contextLine?: string;
   textls?: number;
+  titleTextlsValue?: number;
+  contextTextlsValue?: number;
   bullets: Bullet[];
 }
 
@@ -63,9 +73,11 @@ export interface SimpleListEntry {
   bullets: Bullet[];
 }
 
+export type TextLsStatus = 'ok' | 'compressed' | 'expanded' | 'unfixable';
+
 export interface Bullet {
   id: string;
   text: string;
-  textls?: number;           // computed \textls[N] value, 0 = no adjustment
-  overflowStatus?: 'ok' | 'warning' | 'overflow';
+  textlsValue: number;           // computed \textls[N] value, -60 to +20, default 0
+  textlsStatus: TextLsStatus;
 }

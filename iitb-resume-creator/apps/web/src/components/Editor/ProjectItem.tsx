@@ -34,7 +34,22 @@ export const ProjectItem: React.FC<ProjectProps> = ({ item, sectionId, columnWid
   const addBullet = useResumeStore(s => s.addBullet);
   const deleteItem = useResumeStore(s => s.deleteItem);
   const updateProjectField = useResumeStore(s => s.updateProjectField);
+  const recomputeAllTextLs = useResumeStore(s => s.recomputeAllTextLs);
   const [collapsed, setCollapsed] = useState(false);
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (columnWidthPx > 0) {
+        recomputeAllTextLs(columnWidthPx);
+      }
+    }, 150);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [item.title, item.subtitle, item.guide, item.organization, item.date, columnWidthPx, recomputeAllTextLs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

@@ -33,32 +33,46 @@
 
 .preview-logo {
   height: 2.0cm;
-  width: auto;
+  width: 2.2cm;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
 }
 
 .preview-header-table {
   border-collapse: collapse;
   font-size: 11pt;
-  width: 100%;
+  width: 100% !important;
+  display: table !important;
+  /* Override latex.css default table borders */
+  border: none !important;
+  margin: 0 !important;
+}
+
+.preview-header-table tr, .preview-header-table tbody tr:last-child {
+  border: none !important;
 }
 
 .preview-header-table td {
   padding: 0 4px;
   font-weight: bold;
+  border: none !important;
 }
 
 /* --- Academic Table --- */
 .academic-table {
-  width: 100%;
+  width: 100% !important;
+  display: table !important;
   border-collapse: collapse;
   font-size: 10.5pt;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin: 8px 0 !important;
+  border-top: 1.5px solid #000 !important;
+  border-bottom: none !important;
 }
 
 .academic-table th {
-  border-top: 1.5px solid #000; 
-  border-bottom: 1px solid #000; 
+  border-top: none !important; 
+  border-bottom: 1px solid #000 !important; 
   padding: 4px;
   font-weight: bold;
   text-align: left;
@@ -66,23 +80,42 @@
 
 .academic-table td {
   padding: 4px;
+  border: none !important;
 }
 
-.academic-table tr:last-child td {
-  border-bottom: 1.5px solid #000; 
+.academic-table tr:last-child, .academic-table tbody tr:last-child {
+  border-bottom: 1.5px solid #000 !important; 
 }
 
 /* --- Section Formatting --- */
 section h2 {
-  border-bottom: 1px solid var(--text-color);
-  padding-bottom: 0.2rem;
-  margin-top: 12px;
-  margin-bottom: 8px;
+  color: #0000ff !important;
+  font-variant: small-caps;
+  font-size: 14.4pt !important;
+  font-weight: normal !important;
+  display: flex;
+  align-items: center;
+  margin-top: var(--section-top, 12px);
+  margin-bottom: var(--section-bottom, 6px);
+  border: none !important;
+  padding-bottom: 0;
+}
+
+section h2::after {
+  content: "";
+  flex: 1;
+  height: 0.5pt;
+  background: #000;
+  margin-left: 6px;
 }
 
 /* --- Project Layout --- */
 .project-entry {
-  margin-bottom: 1.2rem;
+  margin-bottom: var(--project-bottom, 12px);
+}
+
+.project-entry:last-child {
+  margin-bottom: 0;
 }
 
 .header-row {
@@ -94,12 +127,15 @@ section h2 {
 
 .title-left {
   font-size: 1.05em;
-  font-weight: bold;
+  white-space: nowrap;
 }
 
 .date-right {
   font-style: italic;
   font-size: 0.9em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .separator-rule {
@@ -119,13 +155,17 @@ section h2 {
 
 /* Tight list replication */
 .tight-list {
-  margin: -4pt 0 0 0; /* vspace -10pt simulation */
+  margin: -4pt 0 var(--project-bottom, 12px) 0; /* vspace -10pt simulation */
   padding-left: 1.2rem;
   list-style-type: disc;
 }
 
+.tight-list:last-child {
+  margin-bottom: 0;
+}
+
 .tight-list li {
-  margin: 0 0 2px 0; /* Compact but not overlapping */
+  margin: 0 0 var(--bullet-item-sep, 2px) 0; /* Compact but not overlapping */
   padding: 0;
   line-height: 1.2; 
   letter-spacing: -0.01em;

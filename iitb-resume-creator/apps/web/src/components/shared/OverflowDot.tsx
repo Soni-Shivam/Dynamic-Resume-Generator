@@ -1,26 +1,41 @@
 import React from 'react';
+import type { TextLsStatus } from '../../types';
 
 interface Props {
-  status?: 'ok' | 'warning' | 'overflow';
+  status?: TextLsStatus;
+  textlsValue?: number;
 }
 
-const colors = {
-  ok: 'bg-green-400',
-  warning: 'bg-yellow-400',
-  overflow: 'bg-red-500 animate-pulse',
+const config = {
+  ok: {
+    color: 'bg-green-400',
+    tooltip: 'Fits on one line',
+    pulse: false,
+  },
+  compressed: {
+    color: 'bg-blue-400',
+    tooltip: (v: number) => `Auto-compressed to \\textls[${v}] to fit`,
+    pulse: false,
+  },
+  expanded: {
+    color: 'bg-green-300',
+    tooltip: 'Fits with room to spare',
+    pulse: false,
+  },
+  unfixable: {
+    color: 'bg-red-500',
+    tooltip: 'Too long — even maximum compression cannot fit this on one line. Shorten it.',
+    pulse: true,
+  },
 };
 
-const tooltips = {
-  ok: 'Fits on one line',
-  warning: 'Close to overflow — check preview',
-  overflow: 'Overflows to line 2 — shorten this bullet',
-};
-
-export const OverflowDot: React.FC<Props> = ({ status = 'ok' }) => {
+export const OverflowDot: React.FC<Props> = ({ status = 'ok', textlsValue = 0 }) => {
+  const conf = config[status];
+  const tooltipText = typeof conf.tooltip === 'function' ? conf.tooltip(textlsValue) : conf.tooltip;
   return (
     <div
-      title={tooltips[status]}
-      className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 cursor-help transition-colors ${colors[status]}`}
+      title={tooltipText}
+      className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 cursor-help transition-colors ${conf.color} ${conf.pulse ? 'animate-pulse' : ''}`}
     />
   );
 };

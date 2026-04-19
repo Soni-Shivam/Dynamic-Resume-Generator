@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useResumeStore } from '../../store/resumeStore';
 import { OverflowDot } from '../shared/OverflowDot';
-import { measureBulletOverflow } from '../../lib/overflowDetector';
+import { computeTextLs } from '../../lib/overflowDetector';
+import type { TextLsStatus } from '../../types';
 
 interface Props {
   columnWidthPx: number;
@@ -13,11 +14,23 @@ export const AIPanel: React.FC<Props> = ({ columnWidthPx }) => {
   const addBullet = useResumeStore(s => s.addBullet);
   const updateBulletText = useResumeStore(s => s.updateBulletText);
 
+  const measureDivRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    measureDivRef.current = document.createElement('div');
+    document.body.appendChild(measureDivRef.current);
+    return () => {
+      if (measureDivRef.current) {
+        document.body.removeChild(measureDivRef.current);
+      }
+    };
+  }, []);
+
   const [description, setDescription] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [generatedText, setGeneratedText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [overflowStatus, setOverflowStatus] = useState<'ok' | 'warning' | 'overflow'>('ok');
+  const [overflowStatus, setOverflowStatus] = useState<TextLsStatus>('ok');
 
   // Collect all project entries for the dropdown
   const projectOptions: { id: string; title: string; bullets: string[]; contextLine?: string }[] = [];
@@ -86,14 +99,14 @@ export const AIPanel: React.FC<Props> = ({ columnWidthPx }) => {
             if (parsed.type === 'chunk') {
               accumulated += parsed.text;
               setGeneratedText(accumulated);
-              if (columnWidthPx > 0) {
-                setOverflowStatus(measureBulletOverflow(accumulated, columnWidthPx));
+              if (columnWidthPx > 0 && measureDivRef.current) {
+                setOverflowStatus(computeTextLs(accumulated, measureDivRef.current, columnWidthPx).status);
               }
             } else if (parsed.type === 'done') {
               accumulated = parsed.fullText;
               setGeneratedText(accumulated);
-              if (columnWidthPx > 0) {
-                setOverflowStatus(measureBulletOverflow(accumulated, columnWidthPx));
+              if (columnWidthPx > 0 && measureDivRef.current) {
+                setOverflowStatus(computeTextLs(accumulated, measureDivRef.current, columnWidthPx).status);
               }
             }
           } catch {

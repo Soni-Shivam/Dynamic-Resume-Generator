@@ -1,160 +1,158 @@
 import { parseBoldMarkdown } from './boldMarkdown';
+import type { TextLsStatus } from '../types';
 
-// 11pt at 96 dpi = 11 * 96 / 72 = 14.667px
-const FONT_SIZE_PX = 14.667;
-
-// textls units: 1 unit = 1/1000 em
-// so textls N → letter-spacing = N/1000 em = N * FONT_SIZE_PX / 1000 px
-const TEXTLS_MIN = -80;
-const TEXTLS_MAX = 50;
-
-function applyBaseStyles(el: HTMLDivElement, letterSpacingEm: number) {
-  el.style.fontFamily = "'CMU Serif', 'Computer Modern Serif', Georgia, serif";
-  el.style.fontSize = '11pt';
-  el.style.lineHeight = '1.2';
-  el.style.position = 'absolute';
-  el.style.visibility = 'hidden';
-  el.style.top = '-9999px';
-  el.style.left = '-9999px';
-  el.style.boxSizing = 'border-box';
-  el.style.letterSpacing = letterSpacingEm === 0 ? 'normal' : `${letterSpacingEm.toFixed(5)}em`;
+export interface TextLsResult {
+  textlsValue: number;        // integer, -60 to +20, to pass to \textls[N]
+  letterSpacing: string;      // CSS value, e.g. "-0.04em"
+  fitsOnOneLine: boolean;
+  status: TextLsStatus;
 }
 
-/** Measure the pixel width of text rendered on a single (no-wrap) line */
-function measureSingleLineWidth(html: string, letterSpacingEm: number): number {
-  const el = document.createElement('div');
-  applyBaseStyles(el, letterSpacingEm);
-  el.style.whiteSpace = 'nowrap';
-  el.innerHTML = html;
-  document.body.appendChild(el);
-  const w = el.scrollWidth;
-  document.body.removeChild(el);
-  return w;
-}
-
-/** Check whether text wraps within columnWidthPx at a given letter-spacing */
-function fitsOnOneLine(html: string, columnWidthPx: number, letterSpacingEm: number): boolean {
-  const el = document.createElement('div');
-  applyBaseStyles(el, letterSpacingEm);
-  el.style.width = `${columnWidthPx}px`;
-  el.style.whiteSpace = 'normal';
-  el.style.wordBreak = 'break-word';
-  el.style.paddingLeft = '1.5em';
-  el.innerHTML = html;
-  document.body.appendChild(el);
-  const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || FONT_SIZE_PX * 1.2;
-  const height = el.scrollHeight;
-  document.body.removeChild(el);
-  return height <= lineHeight * 1.1;
-}
-
-/**
- * Compute the optimal \textls[N] value that makes the bullet fit on exactly
- * one line. Returns an integer in [-80, +50].
- *
- * Strategy:
- * 1. Measure the single-line pixel width at textls=0
- * 2. If it fits → return 0
- * 3. Compute the required letter-spacing reduction analytically from the
- *    excess width and character count
- * 4. Verify that computed value actually fits (DOM wrapping can differ from
- *    pure width due to word-boundary logic)
- * 5. If not, binary-search downward to find the tightest value that fits
- */
-export function computeOptimalTextls(
-  text: string,
-  columnWidthPx: number
-): { textls: number; overflow: boolean } {
-  if (!text.trim() || columnWidthPx <= 0) return { textls: 0, overflow: false };
-
-  const html = parseBoldMarkdown(text);
-
-  // Fast path: already fits at textls=0
-  if (fitsOnOneLine(html, columnWidthPx, 0)) {
-    return { textls: 0, overflow: false };
-  }
-
-  // Measure the actual single-line pixel width (no-wrap) at textls=0
-  const singleLineWidth = measureSingleLineWidth(html, 0);
-
-  // Available content width (column minus bullet indent ~1.5em)
-  const indent = 1.5 * FONT_SIZE_PX;
-  const available = columnWidthPx - indent;
-
-  if (available <= 0) return { textls: 0, overflow: true };
-
-  // Excess pixels that need to be removed
-  const excess = singleLineWidth - available;
-
-  if (excess <= 0) {
-    // Width fits but height didn't — probably a word-break issue. Try anyway.
-    return { textls: 0, overflow: false };
-  }
-
-  // Approximate number of inter-character gaps (letter-spacing applies between glyphs)
-  // Use text.length - 1 as the divisor (last char gets no trailing space)
-  const charCount = Math.max(text.replace(/\s/g, '').length - 1, 1);
-
-  // Required letter-spacing reduction in px per gap
-  const reductionPx = excess / charCount;
-
-  // Convert to em: reductionPx / FONT_SIZE_PX
-  // Convert to textls units: multiply by 1000
-  const rawTextls = -Math.ceil((reductionPx / FONT_SIZE_PX) * 1000);
-
-  // Add a small buffer (-2 units) so it's safely inside, not right at the edge
-  const candidateTextls = Math.max(rawTextls - 2, TEXTLS_MIN);
-
-  // Verify the candidate actually fits
-  const candidateLsEm = candidateTextls / 1000;
-  if (fitsOnOneLine(html, columnWidthPx, candidateLsEm)) {
-    // Try to relax toward 0 — maybe we over-compressed
-    // Binary search between candidateTextls and 0 for the least-negative that fits
-    let lo = candidateTextls;
-    let hi = 0;
-    while (hi - lo > 1) {
-      const mid = Math.floor((lo + hi) / 2);
-      if (fitsOnOneLine(html, columnWidthPx, mid / 1000)) {
-        hi = mid;
-      } else {
-        lo = mid;
-      }
-    }
-    return { textls: hi, overflow: false };
-  }
-
-  // Candidate doesn't fit — something non-linear is happening (e.g. word-break).
-  // Binary search downward from candidateTextls.
-  let lo = TEXTLS_MIN;
-  let hi = candidateTextls;
-  while (hi - lo > 1) {
-    const mid = Math.floor((lo + hi) / 2);
-    if (fitsOnOneLine(html, columnWidthPx, mid / 1000)) {
-      hi = mid;
-    } else {
-      lo = mid;
-    }
-  }
-
-  if (fitsOnOneLine(html, columnWidthPx, hi / 1000)) {
-    return { textls: hi, overflow: false };
-  }
-
-  // Even TEXTLS_MIN doesn't fit — bullet is genuinely too long to fix
-  return { textls: TEXTLS_MIN, overflow: true };
-}
-
-/** Legacy helper used by BulletRow for the overflow dot color */
-export function measureBulletOverflow(
-  text: string,
+function binarySearchTextLs(
+  measureDiv: HTMLDivElement,
   columnWidthPx: number,
-  textls = 0
-): 'ok' | 'warning' | 'overflow' {
-  if (!text.trim()) return 'ok';
-  const html = parseBoldMarkdown(text);
-  const lsEm = textls / 1000;
-  if (fitsOnOneLine(html, columnWidthPx, lsEm)) return 'ok';
-  // Check if max compression can save it
-  if (fitsOnOneLine(html, columnWidthPx, TEXTLS_MIN / 1000)) return 'warning';
-  return 'overflow';
+  low: number,   // e.g. -60
+  high: number   // e.g. 0
+): number {
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    measureDiv.style.letterSpacing = `${mid / 1000}em`;
+    if (measureDiv.scrollWidth <= columnWidthPx) {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return low;
+}
+
+export function computeHeaderRowTextLs(
+  titleHtml: string,
+  dateText: string,
+  measureDiv: HTMLDivElement,
+  columnWidthPx: number
+): TextLsResult {
+  if (!titleHtml.trim()) {
+    return { textlsValue: 0, letterSpacing: '0em', fitsOnOneLine: true, status: 'ok' };
+  }
+
+  // Measure date width first
+  measureDiv.style.fontFamily = "'Latin Modern', 'Libertinus', Georgia, Cambria, 'Times New Roman', Times, serif";
+  measureDiv.style.fontSize = '9pt'; // date-right is 0.9em of 11pt approx (actually \small is 9pt)
+  measureDiv.style.lineHeight = '1.2';
+  measureDiv.style.width = 'auto';
+  measureDiv.style.whiteSpace = 'nowrap';
+  measureDiv.style.visibility = 'hidden';
+  measureDiv.style.position = 'absolute';
+  measureDiv.style.paddingLeft = '0';
+  measureDiv.style.margin = '0';
+  measureDiv.style.fontStyle = 'italic';
+  measureDiv.style.letterSpacing = '0em';
+  measureDiv.innerHTML = dateText;
+
+  const dateWidth = measureDiv.scrollWidth;
+  
+  // Also account for the flex gap or space between title and date. Let's add 8px safe gap.
+  const safeColumnWidthPx = Math.max(0, columnWidthPx - dateWidth - 8);
+
+  // Now measure the title
+  measureDiv.style.fontSize = '11pt'; // title-left is 1.05em approx, actually let's use 11pt since it's the base, but title-left class has 1.05em. Let's set 11.5pt.
+  measureDiv.style.fontSize = '11.5pt';
+  measureDiv.style.fontStyle = 'normal';
+  measureDiv.style.width = `${safeColumnWidthPx}px`;
+
+  measureDiv.innerHTML = titleHtml;
+  
+  const naturalWidth = measureDiv.scrollWidth;
+
+  if (naturalWidth <= safeColumnWidthPx) {
+    return { textlsValue: 0, letterSpacing: '0em', fitsOnOneLine: true, status: 'ok' };
+  }
+
+  const maxCompression = -100;
+  measureDiv.style.letterSpacing = `${maxCompression / 1000}em`;
+  if (measureDiv.scrollWidth > safeColumnWidthPx) {
+    return {
+      textlsValue: maxCompression,
+      letterSpacing: `${maxCompression / 1000}em`,
+      fitsOnOneLine: false,
+      status: 'unfixable',
+    };
+  }
+
+  const bestN = binarySearchTextLs(measureDiv, safeColumnWidthPx, maxCompression, 0);
+
+  return {
+    textlsValue: bestN,
+    letterSpacing: `${bestN / 1000}em`,
+    fitsOnOneLine: true,
+    status: 'compressed',
+  };
+}
+export function computeTextLs(
+  text: string,
+  measureDiv: HTMLDivElement,
+  columnWidthPx: number
+): TextLsResult {
+  if (!text.trim()) {
+    return { textlsValue: 0, letterSpacing: '0em', fitsOnOneLine: true, status: 'ok' };
+  }
+
+  // Add a small 2px safety buffer to prevent edge-case subpixel wrapping
+  const safeColumnWidthPx = Math.max(0, columnWidthPx - 2);
+
+  // 1. Set measureDiv styles: same font/size/lineheight as preview,
+  // width: safeColumnWidthPx + 'px', white-space: nowrap, visibility: hidden, position: absolute.
+  // Assuming the preview font stack here:
+  measureDiv.style.fontFamily = "'Latin Modern', 'Libertinus', Georgia, Cambria, 'Times New Roman', Times, serif";
+  measureDiv.style.fontSize = '11pt';
+  measureDiv.style.lineHeight = '1.2';
+  measureDiv.style.width = `${safeColumnWidthPx}px`;
+  measureDiv.style.whiteSpace = 'nowrap';
+  measureDiv.style.visibility = 'hidden';
+  measureDiv.style.position = 'absolute';
+  measureDiv.style.paddingLeft = '0'; // reset any padding
+  measureDiv.style.margin = '0'; // reset any margin
+
+  // 2. Set measureDiv.innerHTML = parseBoldMarkdown(text) with letter-spacing: 0em.
+  measureDiv.innerHTML = parseBoldMarkdown(text);
+  measureDiv.style.letterSpacing = '0em';
+
+  // 3. Measure naturalWidth = measureDiv.scrollWidth.
+  const naturalWidth = measureDiv.scrollWidth;
+
+  // 4. If naturalWidth <= safeColumnWidthPx: binary search upward (0 to +20)
+  if (naturalWidth <= safeColumnWidthPx) {
+    // Actually we only care if it fits at 0. If it fits at 0, we can leave it at 0 as requested:
+    // "(N>0, though in practice don't auto-expand — just leave at 0 if it fits)."
+    return {
+      textlsValue: 0,
+      letterSpacing: '0em',
+      fitsOnOneLine: true,
+      status: 'ok',
+    };
+  }
+
+  // 5. If naturalWidth > safeColumnWidthPx: binary search downward (0 to -60)
+  const maxCompression = -60;
+  measureDiv.style.letterSpacing = `${maxCompression / 1000}em`;
+  if (measureDiv.scrollWidth > safeColumnWidthPx) {
+    // 6. If even at N=-60 the text still overflows: fitsOnOneLine = false
+    return {
+      textlsValue: maxCompression,
+      letterSpacing: `${maxCompression / 1000}em`,
+      fitsOnOneLine: false,
+      status: 'unfixable',
+    };
+  }
+
+  // Find tightest fit
+  const bestN = binarySearchTextLs(measureDiv, safeColumnWidthPx, maxCompression, 0);
+
+  return {
+    textlsValue: bestN,
+    letterSpacing: `${bestN / 1000}em`,
+    fitsOnOneLine: true,
+    status: 'compressed',
+  };
 }

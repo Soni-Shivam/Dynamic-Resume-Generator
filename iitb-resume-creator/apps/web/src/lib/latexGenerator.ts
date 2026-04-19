@@ -1,4 +1,4 @@
-import type { Resume, Section, SectionItem, ProjectEntry, TableEntry, SimpleListEntry, BulletOnlyEntry } from '../types';
+import type { Resume, Section, SectionItem, ProjectEntry, TableEntry, SimpleListEntry, BulletOnlyEntry, Bullet } from '../types';
 import { markdownToLatex } from './boldMarkdown';
 
 function sectionHeading(title: string): string {
@@ -27,35 +27,53 @@ function toBold(text: string): string {
   return markdownToLatex(escapeTex(text));
 }
 
-function projectEntry(item: ProjectEntry): string {
-  const parts = [item.title, item.subtitle, item.guide, item.organization]
+function bulletToLatex(bullet: Bullet): string {
+  const boldText = toBold(bullet.text);
+  if (bullet.textlsValue === 0) {
+    return `    \\item ${boldText}`;
+  }
+  return `    \\item \\textls[${bullet.textlsValue}]{${boldText}}`;
+}
+
+function projectEntry(item: ProjectEntry, spacing: Resume['spacing']): string {
+  let titlePart = '';
+  if (item.title.includes('|')) {
+    const titleParts = item.title.split('|');
+    titlePart = `\\textbf{${escapeTex(titleParts[0].trim())}} $|$ \\textit{${escapeTex(titleParts.slice(1).join('|').trim())}}`;
+  } else {
+    titlePart = `\\textbf{${escapeTex(item.title)}}`;
+  }
+
+  const restParts = [item.subtitle, item.guide, item.organization]
     .filter((p): p is string => Boolean(p))
-    .map(p => escapeTex(p));
-  // For the first part use textbf, rest use textit
-  const titlePart = `\\textbf{${parts[0]}}`;
-  const restParts = parts.slice(1).map(p => `\\textit{${p}}`);
-  const allParts = [titlePart, ...restParts].join(' $|$ ');
+    .map(p => `\\textit{${escapeTex(p)}}`);
+  let allParts = [titlePart, ...restParts].join(' $|$ ');
 
-  const contextBlock = item.contextLine
-    ? `\\noindent{\\textls[-20]{\\emph{${toBold(item.contextLine)}}}}\n\n`
-    : '';
+  if (item.titleTextlsValue !== undefined && item.titleTextlsValue !== 0) {
+    allParts = `\\textls[${item.titleTextlsValue}]{${allParts}}`;
+  }
 
-  const bullets = item.bullets
-    .map(b => `    \\item \\textls[${b.textls ?? 0}]{${toBold(b.text)}}`)
-    .join('\n');
+  let contextBlock = '';
+  if (item.contextLine) {
+    const lsVal = item.contextTextlsValue && item.contextTextlsValue !== 0 ? item.contextTextlsValue : -20;
+    contextBlock = `\\noindent{\\textls[${lsVal}]{\\emph{${toBold(item.contextLine)}}}}\n\n`;
+  }
+
+  const bullets = item.bullets.map(bulletToLatex).join('\n');
+  const itemSepMm = (spacing.bulletItemSep * 0.25 - 2.0).toFixed(1);
 
   return `
 {\\flushleft {${allParts} \\hfill{\\sl\\small (${escapeTex(item.date)})}\\\\}}
 \\vspace{-3mm}
 \\noindent\\rule{\\textwidth}{0.5 pt}
 ${contextBlock}\\vspace{-10pt}
-\\begin{itemize}[itemsep=-1.5mm, leftmargin=*]
+\\begin{itemize}[itemsep=${itemSepMm}mm, leftmargin=*]
 ${bullets}
 \\end{itemize}
 `;
 }
 
-function tableSection(entry: TableEntry): string {
+function tableSection(entry: TableEntry, spacing: Resume['spacing']): string {
   const rows = entry.rows
     .map(r => `  \\textbf{${escapeTex(r.label)}} & ${escapeTex(r.content)}\\\\ \\hline`)
     .join('\n');
@@ -67,42 +85,51 @@ ${rows}
 `;
 }
 
-function simpleListSection(entry: SimpleListEntry): string {
-  const bullets = entry.bullets
-    .map(b => `    \\item \\textls[${b.textls ?? 0}]{${toBold(b.text)}}`)
-    .join('\n');
+function simpleListSection(entry: SimpleListEntry, spacing: Resume['spacing']): string {
+  const bullets = entry.bullets.map(bulletToLatex).join('\n');
+  const itemSepMm = (spacing.bulletItemSep * 0.25 - 2.0).toFixed(1);
   return `
-\\begin{itemize}[itemsep=-1.5mm, leftmargin=*]
+\\begin{itemize}[itemsep=${itemSepMm}mm, leftmargin=*]
 \\renewcommand\\labelitemi{$\\bullet$}
 ${bullets}
 \\end{itemize}
 `;
 }
 
-function bulletListSection(entry: BulletOnlyEntry): string {
-  const bullets = entry.bullets
-    .map(b => `    \\item \\textls[${b.textls ?? 0}]{${toBold(b.text)}}`)
-    .join('\n');
+function bulletListSection(entry: BulletOnlyEntry, spacing: Resume['spacing']): string {
+  const bullets = entry.bullets.map(bulletToLatex).join('\n');
+  const itemSepMm = (spacing.bulletItemSep * 0.25 - 2.0).toFixed(1);
   return `
-\\begin{itemize}[itemsep=-1.5mm, leftmargin=*]
+\\begin{itemize}[itemsep=${itemSepMm}mm, leftmargin=*]
 ${bullets}
 \\end{itemize}
 `;
 }
-
-function renderSectionItem(item: SectionItem): string {
+function renderSectionItem(item: SectionItem, spacing: Resume['spacing']): string {
   switch (item.kind) {
-    case 'project': return projectEntry(item);
-    case 'table': return tableSection(item);
-    case 'simple_list': return simpleListSection(item);
-    case 'bullet_list': return bulletListSection(item);
+    case 'project': return projectEntry(item, spacing);
+    case 'table': return tableSection(item, spacing);
+    case 'simple_list': return simpleListSection(item, spacing);
+    case 'bullet_list': return bulletListSection(item, spacing);
   }
 }
 
-function renderSection(section: Section): string {
+function renderSection(section: Section, spacing: Resume['spacing']): string {
+  if (section.items.length === 0) return '';
   const heading = sectionHeading(section.displayTitle);
-  const items = section.items.map(renderSectionItem).join('\n');
-  return `\n${heading}\n\\vspace{-5pt}\n${items}\n`;
+  
+  // Mapping: spacing.projectBottom 12px -> 0pt extra vspace. 
+  // LaTeX itemize already has some bottom margin. 
+  // We'll use \vspace{...} to adjust it.
+  const itemJoiner = `\n\\vspace{${spacing.projectBottom - 12}pt}\n`;
+  const items = section.items.map(item => renderSectionItem(item, spacing)).join(itemJoiner);
+  
+  // Mapping: sectionTop 12px -> -25pt (approx \vspace{-8mm})
+  // sectionBottom 6px -> -5pt (original template)
+  const topSpace = `\\vspace{${spacing.sectionTop - 37}pt}`;
+  const bottomSpace = `\\vspace{${spacing.sectionBottom - 11}pt}`;
+  
+  return `\n${topSpace}\n${heading}\n${bottomSpace}\n${items}\n`;
 }
 
 export function generateLatex(resume: Resume): string {
@@ -204,7 +231,7 @@ ${academics.map(row => `    ${escapeTex(row.examination)} & ${escapeTex(row.univ
     ? `\n\\vspace{8pt}\n\\noindent \\textls[-10]{${toBold(personal.minorNote)}}\n\\vspace{-5mm}`
     : '';
 
-  const sectionsLatex = sections.map(renderSection).join('\n');
+  const sectionsLatex = sections.map(s => renderSection(s, resume.spacing)).join('\n');
 
   return `${preamble}
 
