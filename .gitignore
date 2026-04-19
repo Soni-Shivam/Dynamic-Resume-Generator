@@ -1,0 +1,57 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.pdf
+*.toc
+*.out
+*.nav
+*.snm
+*.bbl
+*.blg
+*.run.xml
+*.bcf
+*.lof
+*.lot
+*.dvi
+*.ps
+
+# Turbo/Build cache
+.turbo/
+
+# Environment files
+.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Editor/OS specific
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Misc
+.claude/
+sample_resume.tex
+sample_resume.pdf
+Shivam_Soni_Resume.pdf

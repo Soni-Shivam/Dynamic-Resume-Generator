@@ -1,0 +1,228 @@
+/* LaTeX-faithful preview styles — do NOT use Tailwind here */
+
+/* Reset Tailwind preflight inside the preview */
+.resume-preview,
+.resume-preview * {
+  all: revert;
+  box-sizing: border-box;
+}
+
+.resume-preview {
+  font-family: 'CMU Serif', 'Computer Modern Serif', Georgia, serif;
+  font-size: 11pt;
+  line-height: 1.2;
+  color: #000;
+  background: #fff;
+  width: 210mm;
+  min-height: 297mm;
+  padding-top: 14.11mm;
+  padding-bottom: 6.4mm;
+  padding-left: 14.11mm;
+  padding-right: 14.11mm;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+}
+
+/* ---- Header ---- */
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.preview-logo {
+  height: 2.0cm;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.preview-header-table {
+  flex: 1;
+  border-collapse: collapse;
+  font-size: 11pt;
+}
+
+.preview-header-table td {
+  padding: 1px 4px 1px 0;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+/* ---- Academic table ---- */
+.academic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5pt;
+  margin-top: 4px;
+}
+
+.academic-table th {
+  font-weight: bold;
+  text-align: left;
+  padding: 2px 6px;
+  border-top: 1.5px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+.academic-table td {
+  padding: 2px 6px;
+  vertical-align: top;
+}
+
+.academic-table tbody tr:last-child td {
+  border-bottom: 1.5px solid #000;
+}
+
+/* ---- Minor note ---- */
+.minor-note {
+  font-size: 10pt;
+  margin-top: 6px;
+  margin-bottom: -4px;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Section heading ---- */
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-variant: small-caps;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #0000cc;
+  margin-bottom: 1px;
+  margin-top: 7px;
+}
+
+.section-heading::after {
+  content: '';
+  flex: 1;
+  height: 0.5pt;
+  background: #000;
+  display: block;
+}
+
+/* ---- Project entry ---- */
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1px;
+}
+
+.project-title-left {
+  font-weight: bold;
+  font-size: 10.5pt;
+}
+
+.project-title-left em {
+  font-weight: normal;
+}
+
+.project-date {
+  font-style: italic;
+  font-size: 9pt;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.project-rule {
+  border: none;
+  border-top: 0.5pt solid #000;
+  margin: 2px 0 1px 0;
+}
+
+.project-context {
+  font-style: italic;
+  font-size: 9.5pt;
+  margin-bottom: 1px;
+  letter-spacing: -0.025em;
+}
+
+.project-bullets {
+  margin: 0;
+  padding-left: 1.5em;
+  list-style: none;
+}
+
+.project-bullets li {
+  line-height: 1.15;
+  position: relative;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  font-size: 10.5pt;
+}
+
+.project-bullets li + li {
+  margin-top: -0.5mm;
+}
+
+.project-bullets li::before {
+  content: '•';
+  position: absolute;
+  left: -1.1em;
+  font-size: 0.5em;
+  top: 0.42em;
+  line-height: 1;
+}
+
+.bullet-overflow {
+  text-decoration: underline wavy #ef4444;
+  text-decoration-thickness: 1px;
+}
+
+/* ---- Simple list (scholastic, extracurricular) ---- */
+.simple-bullets {
+  margin: 0;
+  padding-left: 1.5em;
+  list-style: none;
+}
+
+.simple-bullets li {
+  line-height: 1.18;
+  position: relative;
+  font-size: 10.5pt;
+}
+
+.simple-bullets li + li {
+  margin-top: -0.3mm;
+}
+
+.simple-bullets li::before {
+  content: '•';
+  position: absolute;
+  left: -1.1em;
+  font-size: 0.5em;
+  top: 0.42em;
+  line-height: 1;
+}
+
+/* ---- Skills / Courses table ---- */
+.skills-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin-top: 3px;
+}
+
+.skills-table td {
+  border: 0.5pt solid #000;
+  padding: 2px 5px;
+  vertical-align: top;
+  line-height: 1.2;
+}
+
+.skills-table td:first-child {
+  width: 20%;
+  font-weight: bold;
+}
+
+.skills-table td:last-child {
+  width: 75%;
+}
+
+.project-entry {
+  margin-bottom: -2px;
+}
